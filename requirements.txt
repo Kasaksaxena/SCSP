@@ -5,3 +5,4 @@ openpyxl==3.1.5
 whitenoise==6.9.0
 dj-database-url==2.3.0
 psycopg[binary]==3.2.9
+python-dotenv==1.0.1
