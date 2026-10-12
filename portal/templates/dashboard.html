@@ -1,0 +1,899 @@
+{% extends "base.html" %} {% block content %}
+<style>
+    th {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    th:hover {
+        background-color: rgb(0, 0, 0);
+    }
+
+    .pagination-btn {
+        padding: 8px 16px;
+        background: var(--blue);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-family: var(--sans);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+            background 0.15s,
+            transform 0.12s,
+            box-shadow 0.15s;
+        box-shadow: 0 2px 6px rgba(26, 111, 196, 0.22);
+        margin: 0 5px;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+        background: var(--blue-light);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(26, 111, 196, 0.3);
+    }
+
+    .pagination-btn:active:not(:disabled) {
+        transform: translateY(0);
+    }
+
+    .pagination-btn:disabled {
+        background: var(--text-muted);
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+    }
+</style>
+<h2>Student Dashboard</h2>
+
+<div class="filters">
+    <select id="centerFilter">
+        <option value="">All Centers</option>
+        <option value="inderlok">Inderlok</option>
+        <option value="janakpuri">Janakpuri</option>
+        <option value="karkardooma">Karkardooma</option>
+    </select>
+    <select id="modeFilter">
+        <option value="">All Mode</option>
+        <option value="offline">Offline</option>
+        <option value="online">Online</option>
+    </select>
+    <select id="casteFilter">
+        <option value="">All Caste</option>
+        <option value="OBC">OBC</option>
+        <option value="SC">SC</option>
+        <option value="ST">ST</option>
+        <option value="PWD">PWD</option>
+        <option value="GENERAL">GENERAL</option>
+    </select>
+    <select id="trainedFilter">
+        <option value="">All (Trained)</option>
+        <option value="true">Trained</option>
+        <option value="or">Trained/Certified</option>
+        <option value="false">Not Trained</option>
+    </select>
+
+    <select id="certifiedFilter">
+        <option value="">All (Certified)</option>
+        <option value="true">Certified</option>
+        <option value="false">Not Certified</option>
+    </select>
+    <select id="placedFilter">
+        <option value="">All (Placed)</option>
+        <option value="true">Placed</option>
+        <option value="false">Not Placed</option>
+    </select>
+    <select id="claimedFilter">
+        <option value="">All (Claimed)</option>
+        <option value="true">Claimed</option>
+        <option value="false">Not Claimed</option>
+    </select>
+    <select id="schemeFilter">
+        <option value="">All Schemes</option>
+        <option value="PMKVY">PMKVY</option>
+        <option value="DDUGKY">DDUGKY</option>
+        <option value="STRIVE">STRIVE</option>
+    </select>
+    <select id="nsqfFilter">
+        <option value="">All (NSQF)</option>
+        <option value="yes">NSQF</option>
+        <option value="no">Non NSQF</option>
+    </select>
+    <select id="yearFilter">
+        <option value="">All Years</option>
+        <option value="2020">2020</option>
+        <option value="2021">2021</option>
+        <option value="2022">2022</option>
+        <option value="2023">2023</option>
+        <option value="2024">2024</option>
+        <option value="2025">2025</option>
+        <option value="2026">2026</option>
+        <option value="2027">2027</option>
+        <option value="2028">2028</option>
+    </select>
+    <select id="quarterlyFilter">
+        <option value="">All Quarterly</option>
+        <option value="Q1">Q1</option>
+        <option value="Q2">Q2</option>
+        <option value="Q3">Q3</option>
+        <option value="Q4">Q4</option>
+    </select>
+
+    <div style="display: flex">
+        <button
+            onclick="clearFilters()"
+            class="clear-btn"
+            style="margin-right: 95px"
+        >
+            Clear
+        </button>
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search Name or Roll No..."
+            class="minput"
+            style="width: 300px; display: inline-block; margin-right: 10px"
+        />
+        <button
+            onclick="filterStudents()"
+            class="clear-btn"
+            style="background-color: blue"
+        >
+            Find
+        </button>
+
+        <button
+            onclick="downloadFilteredData()"
+            class="clear-btn"
+            style="background-color: green; margin-left: 10px"
+        >
+            Download Excel
+        </button>
+    </div>
+</div>
+
+<div style="overflow-x: auto">
+    <table>
+        <thead>
+            <tr>
+                <th onclick="sortTable('roll_number')">
+                    Roll No <span id="sort-roll_number"></span>
+                </th>
+                <th onclick="sortTable('batch_code')">
+                    Batch Code <span id="sort-batch_code"></span>
+                </th>
+                <th onclick="sortTable('name')">
+                    Name <span id="sort-name"></span>
+                </th>
+                <th onclick="sortTable('course_name')">
+                    Course <span id="sort-course_name"></span>
+                </th>
+                <th onclick="sortTable('father_name')">
+                    Father <span id="sort-father_name"></span>
+                </th>
+                <th onclick="sortTable('mother_name')">
+                    Mother <span id="sort-mother_name"></span>
+                </th>
+                <th onclick="sortTable('dob')">
+                    DOB <span id="sort-dob"></span>
+                </th>
+                <th onclick="sortTable('gender')">
+                    Gender <span id="sort-gender"></span>
+                </th>
+                <th onclick="sortTable('address')">
+                    Address <span id="sort-address"></span>
+                </th>
+                <th onclick="sortTable('qualifications')">
+                    Qualifications <span id="sort-qualifications"></span>
+                </th>
+                <th onclick="sortTable('aadhaar')">
+                    Aadhaar <span id="sort-aadhaar"></span>
+                </th>
+                <th onclick="sortTable('scheme')">
+                    Scheme <span id="sort-scheme"></span>
+                </th>
+                <th onclick="sortTable('nsqf')">
+                    NSQF <span id="sort-nsqf"></span>
+                </th>
+                <th onclick="sortTable('course_hour')">
+                    Hours <span id="sort-course_hour"></span>
+                </th>
+                <th onclick="sortTable('course_category')">
+                    Category <span id="sort-course_category"></span>
+                </th>
+                <th onclick="sortTable('center_name')">
+                    Center <span id="sort-center_name"></span>
+                </th>
+                <th onclick="sortTable('mode')">
+                    Mode <span id="sort-mode"></span>
+                </th>
+                <th onclick="sortTable('caste_category')">
+                    Caste <span id="sort-caste_category"></span>
+                </th>
+                <th onclick="sortTable('fee')">
+                    Fee <span id="sort-fee"></span>
+                </th>
+                <th onclick="sortTable('claimable_amount')">
+                    Claimable <span id="sort-claimable_amount"></span>
+                </th>
+                <th onclick="sortTable('fee_date')">
+                    Fee Date <span id="sort-fee_date"></span>
+                </th>
+                <th onclick="sortTable('trained')">
+                    Trained <span id="sort-trained"></span>
+                </th>
+                <th onclick="sortTable('certified')">
+                    Certified <span id="sort-certified"></span>
+                </th>
+                <th onclick="sortTable('placed')">
+                    Placed <span id="sort-placed"></span>
+                </th>
+                <th onclick="sortTable('session')">
+                    Session <span id="sort-session"></span>
+                </th>
+                <th>Edit</th>
+                <th onclick="sortTable('claimed')">
+                    Claimed <span id="sort-claimed"></span>
+                </th>
+            </tr>
+        </thead>
+        <tbody id="results">
+            <tr>
+                <td colspan="26" style="text-align: center">Loading...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination Controls -->
+<div
+    id="pagination"
+    style="display: none; text-align: center; margin-top: 20px"
+>
+    <button
+        id="prevBtn"
+        onclick="changePage(currentPage - 1)"
+        disabled
+        class="pagination-btn"
+    >
+        Previous
+    </button>
+    <span id="pageInfo" style="margin: 0 20px">Page 1 of 1</span>
+    <button
+        id="nextBtn"
+        onclick="changePage(currentPage + 1)"
+        disabled
+        class="pagination-btn"
+    >
+        Next
+    </button>
+    <div style="margin-top: 10px">
+        <label>Records per page:</label>
+        <select id="limitSelect" onchange="changeLimit(this.value)">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+        </select>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div
+    id="editModal"
+    style="
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.52);
+        z-index: 999;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    "
+>
+    <div class="modal-box">
+        <div class="modal-header">
+            <div>
+                <div class="modal-header-label">Editing record</div>
+                <div class="modal-header-name" id="modal-title"></div>
+                <div class="modal-header-roll" id="modal-roll"></div>
+            </div>
+            <button class="modal-close" onclick="closeEditModal()">×</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="mfield">
+                <label>Name</label><input id="m_name" class="minput" />
+            </div>
+            <div class="mfield">
+                <label>Batch Code</label
+                ><input
+                    id="m_batch_code"
+                    class="minput"
+                    style="text-transform: uppercase"
+                />
+            </div>
+            <div class="mfield">
+                <label>Father name</label
+                ><input id="m_father_name" class="minput" />
+            </div>
+            <div class="mfield">
+                <label>Mother name</label
+                ><input id="m_mother_name" class="minput" />
+            </div>
+            <div class="mfield">
+                <label>DOB</label
+                ><input id="m_dob" class="minput" type="date" />
+            </div>
+            <div class="mfield">
+                <label>Gender</label
+                ><select id="m_gender" class="minput">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+            </div>
+            <div class="mfield">
+                <label>Address</label><input id="m_address" class="minput" />
+            </div>
+            <div class="mfield">
+                <label>Qualifications</label
+                ><input id="m_qualifications" class="minput" />
+            </div>
+            <div class="mfield">
+                <label>Aadhaar</label
+                ><input
+                    id="m_aadhaar"
+                    class="minput"
+                    maxlength="12"
+                    pattern="\d*"
+                />
+            </div>
+            <div class="mfield">
+                <label>Course name</label
+                ><input id="m_course_name" class="minput" />
+            </div>
+            <div class="mfield">
+                <label>Scheme</label><input id="m_scheme" class="minput" />
+            </div>
+            <div class="mfield">
+                <label>NSQF level</label
+                ><input
+                    id="m_nsqf"
+                    class="minput"
+                    placeholder="e.g. Level 4 — blank if Non-NSQF"
+                />
+            </div>
+            <div class="mfield">
+                <label>Course hours</label
+                ><input
+                    id="m_course_hour"
+                    class="minput"
+                    type="number"
+                    min="1"
+                />
+            </div>
+            <div class="mfield">
+                <label>Fee (₹)</label
+                ><input id="m_fee" class="minput" type="number" min="0" />
+            </div>
+            <div class="mfield">
+                <label>Center</label>
+                <select id="m_center" class="minput">
+                    <option value="inderlok">Inderlok</option>
+                    <option value="janakpuri">Janakpuri</option>
+                    <option value="karkardooma">Karkardooma</option>
+                </select>
+            </div>
+            <div class="mfield">
+                <label>Mode</label>
+                <select id="m_mode" class="minput">
+                    <option value="offline">Offline</option>
+                    <option value="online">Online</option>
+                </select>
+            </div>
+            <div class="mfield">
+                <label>Caste</label>
+                <select id="m_caste" class="minput">
+                    <option value="GENERAL">GENERAL</option>
+                    <option value="OBC">OBC</option>
+                    <option value="SC">SC</option>
+                    <option value="ST">ST</option>
+                    <option value="PWD">PWD</option>
+                </select>
+            </div>
+            <div class="mfield">
+                <label>Fee Date</label
+                ><input id="m_fee_date" class="minput" type="date" />
+            </div>
+            <div class="mfield">
+                <label>Session (Month/Year)</label>
+                <div style="display: flex; gap: 10px">
+                    <select id="m_session_month" class="minput">
+                        <option value="">Month</option>
+                        <option value="JAN">JAN</option>
+                        <option value="FEB">FEB</option>
+                        <option value="MAR">MAR</option>
+                        <option value="APR">APR</option>
+                        <option value="MAY">MAY</option>
+                        <option value="JUN">JUN</option>
+                        <option value="JUL">JUL</option>
+                        <option value="AUG">AUG</option>
+                        <option value="SEP">SEP</option>
+                        <option value="OCT">OCT</option>
+                        <option value="NOV">NOV</option>
+                        <option value="DEC">DEC</option>
+                    </select>
+                    <select id="m_session_year" class="minput">
+                        <option value="">Year</option>
+                        <option value="2020">2020</option>
+                        <option value="2021">2021</option>
+                        <option value="2022">2022</option>
+                        <option value="2023">2023</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                        <option value="2027">2027</option>
+                        <option value="2028">2028</option>
+                        <option value="2029">2029</option>
+                        <option value="2030">2030</option>
+                    </select>
+                </div>
+                <input
+                    id="m_session"
+                    class="minput"
+                    style="display: none"
+                    placeholder="JAN-2024"
+                />
+            </div>
+            <div class="mfield">
+                <label>Trained</label>
+                <div style="display: flex; gap: 10px; align-items: center">
+                    <input type="checkbox" id="m_trained" class="form-check-input" style="width: 20px; height: 20px; margin: 0;" />
+                    <input type="date" id="m_trained_date" class="minput" style="flex: 1;" />
+                </div>
+            </div>
+            <div class="mfield">
+                <label>Certified</label>
+                <div style="display: flex; gap: 10px; align-items: center">
+                    <input type="checkbox" id="m_certified" class="form-check-input" style="width: 20px; height: 20px; margin: 0;" />
+                    <input type="date" id="m_certified_date" class="minput" style="flex: 1;" />
+                </div>
+            </div>
+            <div class="mfield">
+                <label>Placed</label>
+                <select id="m_placed" class="minput">
+                    <option value="false">No</option>
+                    <option value="true">Yes</option>
+                    <!-- ok -->
+                </select>
+            </div>
+            <div class="mfield">
+                <label>Claimed</label>
+                <select id="m_claimed" class="minput">
+                    <option value="false">No</option>
+                    <option value="true">Yes</option>
+                </select>
+            </div>
+            <div class="mfield">
+                <label>Category <span>(auto)</span></label>
+                <div id="m_category_display" class="minput-auto"></div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button onclick="closeEditModal()" class="btn-secondary btn">
+                Cancel
+            </button>
+            <button onclick="saveModal()" class="btn-primary btn">
+                Save changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentData = [];
+    let currentPage = 1;
+    let currentLimit = 10;
+    let currentPagination = null;
+    let editingIndex = null;
+    let sortField = null;
+    let sortAsc = true;
+
+    // ─── Quarter helpers ──────────────────────────────────────────────────────
+
+    const QUARTER_MONTHS = {
+        Q1: ["APR", "MAY", "JUN"],
+        Q2: ["JUL", "AUG", "SEP"],
+        Q3: ["OCT", "NOV", "DEC"],
+        Q4: ["JAN", "FEB", "MAR"],
+    };
+
+    function dateInQuarter(dateStr, months) {
+        if (!dateStr) return false;
+        const monthNum = parseInt(dateStr.split("-")[1], 10);
+        if (!isNaN(monthNum)) {
+            const MONTH_NAMES = ["", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+            return months.includes(MONTH_NAMES[monthNum]);
+        }
+        return months.includes(dateStr.split("-")[0].toUpperCase());
+    }
+
+    // ─── Fetch & render ───────────────────────────────────────────────────────
+
+    function filterStudents() {
+        const center = document.getElementById("centerFilter").value;
+        const mode = document.getElementById("modeFilter").value;
+        const caste = document.getElementById("casteFilter").value;
+        const trained = document.getElementById("trainedFilter").value;
+        const certified = document.getElementById("certifiedFilter").value;
+        const placed = document.getElementById("placedFilter").value;
+        const claimed = document.getElementById("claimedFilter").value;
+        const scheme = document.getElementById("schemeFilter").value;
+        const nsqf = document.getElementById("nsqfFilter").value;
+        const quarterly = document.getElementById("quarterlyFilter").value;
+        const year = document.getElementById("yearFilter").value;
+        const sortOrder = sortAsc ? "asc" : "desc";
+
+        const url = `/filter-students/?center=${center}&mode=${mode}&caste=${caste}&trained=${trained}&certified=${certified}&placed=${placed}&claimed=${claimed}&scheme=${scheme}&nsqf=${nsqf}&quarterly=${quarterly}&year=${year}&page=${currentPage}&limit=${currentLimit}&sort_field=${sortField || ""}&sort_order=${sortOrder}`;
+
+        fetch(url)
+            .then((res) => res.json())
+            .then((data) => {
+                currentData = data.results;
+                currentPagination = data.pagination;
+                renderTable(currentData);
+                renderPagination(currentPagination);
+            })
+            .catch((err) => {
+                console.error("Error:", err);
+                document.getElementById("results").innerHTML =
+                    `<tr><td colspan="26" style="text-align:center;color:red;">Error loading data</td></tr>`;
+            });
+    }
+
+    function renderPagination(pagination) {
+        const paginationDiv = document.getElementById("pagination");
+        if (pagination.total_pages > 1) {
+            paginationDiv.style.display = "block";
+            document.getElementById("pageInfo").textContent =
+                `Page ${pagination.page} of ${pagination.total_pages}`;
+            document.getElementById("prevBtn").disabled = !pagination.has_prev;
+            document.getElementById("nextBtn").disabled = !pagination.has_next;
+            document.getElementById("limitSelect").value = pagination.limit;
+        } else {
+            paginationDiv.style.display = "none";
+        }
+    }
+
+    function changePage(page) {
+        currentPage = page;
+        filterStudents();
+    }
+
+    function changeLimit(limit) {
+        currentLimit = parseInt(limit);
+        currentPage = 1;
+        filterStudents();
+    }
+
+    function downloadFilteredData() {
+        const center = document.getElementById("centerFilter").value;
+        const mode = document.getElementById("modeFilter").value;
+        const caste = document.getElementById("casteFilter").value;
+        const trained = document.getElementById("trainedFilter").value;
+        const certified = document.getElementById("certifiedFilter").value;
+        const placed = document.getElementById("placedFilter").value;
+        const claimed = document.getElementById("claimedFilter").value;
+        const scheme = document.getElementById("schemeFilter").value;
+        const nsqf = document.getElementById("nsqfFilter").value;
+        const quarterly = document.getElementById("quarterlyFilter").value;
+        const year = document.getElementById("yearFilter").value;
+        const sortOrder = sortAsc ? "asc" : "desc";
+
+        const url = `/download-filtered-data/?center=${center}&mode=${mode}&caste=${caste}&trained=${trained}&certified=${certified}&placed=${placed}&claimed=${claimed}&scheme=${scheme}&nsqf=${nsqf}&quarterly=${quarterly}&year=${year}&sort_field=${sortField || ""}&sort_order=${sortOrder}`;
+
+        window.open(url, "_blank");
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById("results");
+        if (!data.length) {
+            tbody.innerHTML = `<tr><td colspan="25" style="text-align:center;">No students found</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = data.map((s, i) => displayRow(s, i)).join("");
+    }
+
+    function displayRow(s, i) {
+        // ── Quarter-aware badge logic ──────────────────────────────────────────
+        const activeQuarter = document.getElementById("quarterlyFilter").value;
+        const qMonths = QUARTER_MONTHS[activeQuarter] || null;
+
+        const showTrained = qMonths
+            ? dateInQuarter(s.trained_date, qMonths)
+            : !!s.trained;
+        const showCertified = qMonths
+            ? dateInQuarter(s.certified_date, qMonths)
+            : !!s.certified;
+        // ─────────────────────────────────────────────────────────────────────
+
+        const trainedBadge = showTrained
+            ? `<span class="badge-yes">Yes</span><small>${s.trained_date || ""}</small>`
+            : `<span class="badge-no">No</span>`;
+        const certifiedBadge = showCertified
+            ? `<span class="badge-yes">Yes</span><small>${s.certified_date || ""}</small>`
+            : `<span class="badge-no">No</span>`;
+        const placedBadge = s.placed
+            ? `<span class="badge-yes">Yes</span>`
+            : `<span class="badge-no">No</span>`;
+
+        return `<tr id="row-${i}" data-id="${s.id}">
+        <td>${s.roll_number || "-"}</td>
+        <td>${(s.batch_code || "").toUpperCase() || "-"}</td>
+        <td>${s.name}</td>
+        <td>${s.course_name}</td>
+        <td>${s.father_name || "-"}</td>
+        <td>${s.mother_name || "-"}</td>
+        <td>${s.dob || "-"}</td>
+        <td>${s.gender || "-"}</td>
+        <td>${s.address || "-"}</td>
+        <td>${s.qualifications || "-"}</td>
+        <td>${s.aadhaar || "-"}</td>
+        <td>${s.scheme || "-"}</td>
+        <td>${s.nsqf || '<span class="badge-no">Non NSQF</span>'}</td>
+        <td>${s.course_hour}</td>
+        <td>${s.course_category}</td>
+        <td>${s.center_name}</td>
+        <td>${s.mode}</td>
+        <td>${s.caste_category}</td>
+        <td>₹${s.fee}</td>
+        <td>₹${s.claimable_amount}</td>
+        <td>${s.fee_date || "-"}</td>
+        <td>${trainedBadge}</td>
+        <td>${certifiedBadge}</td>
+        <td>${placedBadge}</td>
+        <td>${s.session || "-"}</td>
+        <td><button class="edit-btn" onclick="openEditModal(${i})">Edit</button></td>
+        <td>${s.claimed ? '<span class="badge-yes">Claimed</span>' : '<span class="badge-no">Not claimed</span>'}</td>
+        </tr>`;
+    }
+
+    // ─── Edit modal ───────────────────────────────────────────────────────────
+
+    function openEditModal(i) {
+        editingIndex = i;
+        const s = currentData[i];
+
+        document.getElementById("modal-title").textContent = s.name;
+        document.getElementById("modal-roll").textContent =
+            s.roll_number || "-";
+        document.getElementById("m_name").value = s.name;
+        document.getElementById("m_batch_code").value = s.batch_code || "";
+        document.getElementById("m_father_name").value = s.father_name || "";
+        document.getElementById("m_mother_name").value = s.mother_name || "";
+        document.getElementById("m_dob").value = s.dob || "";
+        document.getElementById("m_gender").value = s.gender || "Male";
+        document.getElementById("m_address").value = s.address || "";
+        document.getElementById("m_qualifications").value =
+            s.qualifications || "";
+        document.getElementById("m_aadhaar").value = s.aadhaar || "";
+        document.getElementById("m_course_name").value = s.course_name;
+        document.getElementById("m_scheme").value = s.scheme || "";
+        document.getElementById("m_nsqf").value = s.nsqf || "";
+        document.getElementById("m_course_hour").value = s.course_hour;
+        document.getElementById("m_fee").value = s.fee;
+        document.getElementById("m_fee_date").value = s.fee_date || "";
+        document.getElementById("m_center").value = s.center_name;
+        document.getElementById("m_mode").value = s.mode;
+        document.getElementById("m_caste").value = s.caste_category;
+        document.getElementById("m_session").value = s.session;
+
+        if (s.session) {
+            const parts = s.session.split("-");
+            if (parts.length === 2) {
+                document.getElementById("m_session_month").value = parts[0];
+                document.getElementById("m_session_year").value = parts[1];
+            }
+        } else {
+            document.getElementById("m_session_month").value = "";
+            document.getElementById("m_session_year").value = "";
+        }
+
+        document.getElementById("m_trained").checked = !!s.trained;
+        document.getElementById("m_trained_date").value = s.trained_date || "";
+        document.getElementById("m_certified").checked = !!s.certified;
+        document.getElementById("m_certified_date").value = s.certified_date || "";
+        document.getElementById("m_placed").value = s.placed ? "true" : "false";
+        document.getElementById("m_claimed").value = s.claimed
+            ? "true"
+            : "false";
+        document.getElementById("m_category_display").textContent =
+            s.course_category;
+
+        document.getElementById("editModal").style.display = "flex";
+    }
+
+    function closeEditModal() {
+        document.getElementById("editModal").style.display = "none";
+        editingIndex = null;
+    }
+
+    function saveModal() {
+        const s = currentData[editingIndex];
+        const sessionMonth = document.getElementById("m_session_month").value;
+        const sessionYear = document.getElementById("m_session_year").value;
+        const sessionValue =
+            sessionMonth && sessionYear
+                ? `${sessionMonth}-${sessionYear}`
+                : (s.session || "");
+        const payload = {
+            name: document.getElementById("m_name").value.trim(),
+            batch_code: document
+                .getElementById("m_batch_code")
+                .value.trim()
+                .toUpperCase(),
+            father_name: document.getElementById("m_father_name").value.trim(),
+            mother_name: document.getElementById("m_mother_name").value.trim(),
+            dob: document.getElementById("m_dob").value,
+            gender: document.getElementById("m_gender").value,
+            address: document.getElementById("m_address").value.trim(),
+            qualifications: document
+                .getElementById("m_qualifications")
+                .value.trim(),
+            aadhaar: document.getElementById("m_aadhaar").value.trim(),
+            course_name: document.getElementById("m_course_name").value.trim(),
+            scheme: document.getElementById("m_scheme").value.trim(),
+            nsqf: document.getElementById("m_nsqf").value.trim(),
+            course_hour: parseInt(
+                document.getElementById("m_course_hour").value,
+            ),
+            fee: parseFloat(document.getElementById("m_fee").value),
+            center_name: document.getElementById("m_center").value,
+            mode: document.getElementById("m_mode").value,
+            caste_category: document.getElementById("m_caste").value,
+            fee_date: document.getElementById("m_fee_date").value,
+            session: sessionValue,
+            trained: document.getElementById("m_trained").checked,
+            trained_date: document.getElementById("m_trained").checked ? document.getElementById("m_trained_date").value : "",
+            certified: document.getElementById("m_certified").checked,
+            certified_date: document.getElementById("m_certified").checked ? document.getElementById("m_certified_date").value : "",
+            placed: document.getElementById("m_placed").value === "true",
+            claimed: document.getElementById("m_claimed").value === "true",
+        };
+
+        fetch(`/update-student/${s.id}/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"),
+            },
+            body: JSON.stringify(payload),
+        })
+            .then((res) => {
+                if (!res.ok) {
+                    return res.text().then((text) => {
+                        throw new Error(
+                            `HTTP ${res.status}: ${text.slice(0, 200)}`,
+                        );
+                    });
+                }
+                return res.json();
+            })
+            .then((resp) => {
+                if (resp.success) {
+                    currentData[editingIndex] = {
+                        ...currentData[editingIndex],
+                        ...payload,
+                        course_category: resp.course_category,
+                        claimable_amount: resp.claimable_amount,
+                        trained_date: resp.trained_date,
+                        certified_date: resp.certified_date,
+                        claimed: resp.claimed,
+                        fee_date: resp.fee_date !== undefined ? resp.fee_date : currentData[editingIndex].fee_date,
+                        dob: resp.dob !== undefined ? resp.dob : currentData[editingIndex].dob,
+                    };
+                    document.getElementById(`row-${editingIndex}`).outerHTML =
+                        displayRow(currentData[editingIndex], editingIndex);
+                    closeEditModal();
+                } else {
+                    alert("Save failed: " + (resp.error || "Unknown error"));
+                }
+            })
+            .catch((err) => {
+                console.error("Update student failed", err);
+                alert("Update failed: " + err.message);
+            });
+    }
+
+    // ─── Utilities ────────────────────────────────────────────────────────────
+
+    function getCookie(name) {
+        const match = document.cookie.match(
+            new RegExp("(^| )" + name + "=([^;]+)"),
+        );
+        return match ? match[2] : "";
+    }
+
+    function clearFilters() {
+        [
+            "centerFilter",
+            "modeFilter",
+            "casteFilter",
+            "trainedFilter",
+            "certifiedFilter",
+            "placedFilter",
+            "claimedFilter",
+            "schemeFilter",
+            "nsqfFilter",
+            "quarterlyFilter",
+            "yearFilter",
+            "searchInput",
+        ].forEach((id) => (document.getElementById(id).value = ""));
+        currentPage = 1;
+        currentLimit = 10;
+        filterStudents();
+    }
+
+    function sortTable(field) {
+        if (sortField === field) {
+            sortAsc = !sortAsc;
+        } else {
+            sortField = field;
+            sortAsc = true;
+        }
+        document
+            .querySelectorAll("th span")
+            .forEach((el) => (el.textContent = ""));
+        const arrow = sortAsc ? "▲" : "▼";
+        const indicator = document.getElementById("sort-" + field);
+        if (indicator) indicator.textContent = arrow;
+        currentPage = 1;
+        filterStudents();
+    }
+
+    // ─── Event listeners ──────────────────────────────────────────────────────
+
+    [
+        "centerFilter",
+        "modeFilter",
+        "casteFilter",
+        "trainedFilter",
+        "certifiedFilter",
+        "placedFilter",
+        "claimedFilter",
+        "schemeFilter",
+        "nsqfFilter",
+        "quarterlyFilter",
+        "yearFilter",
+    ].forEach((id) =>
+        document.getElementById(id).addEventListener("change", () => {
+            currentPage = 1;
+            filterStudents();
+        }),
+    );
+
+    document
+        .getElementById("searchInput")
+        .addEventListener("input", function () {
+            const searchTerm = this.value.toLowerCase();
+            const filteredData = currentData.filter((student) => {
+                const name = (student.name || "").toLowerCase();
+                const roll = (student.roll_number || "")
+                    .toString()
+                    .toLowerCase();
+                return name.includes(searchTerm) || roll.includes(searchTerm);
+            });
+            renderTable(filteredData);
+        });
+
+    window.onload = () => {
+        currentPage = 1;
+        currentLimit = 10;
+        filterStudents();
+    };
+</script>
+
+{% endblock content %}

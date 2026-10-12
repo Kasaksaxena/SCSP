@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container ">
+    <div class="">
+        <h2 class="fw-bold m-0">Add Student !!</h2>
+        <p class="text-muted small">Enter the required information to register a new profile !!</p>
+    </div>
+
+    <form method="POST" id="student_form" class="border rounded-3 p-4 p-md-5 bg-white">
+        {% csrf_token %}
+        
+        <div class="row g-x-5 g-y-4">
+            {% for field in form %}
+                {% if field.name != "trained" and field.name != "certified" and field.name != "placed" and field.name != "session" %}
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label fw-bold small text-dark mb-1">
+                            {{ field.label }}
+                            {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+
+                        {{ field }}
+
+                        {% if field.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ field.errors|striptags }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            <div class="col-md-6 mb-3">
+                <label for="session_month" class="form-label fw-bold small text-dark mb-1">
+                    Session Month/Year
+                    <span class="text-danger">*</span>
+                </label>
+                <div class="d-flex gap-2">
+                    <select id="session_month" class="form-select" required>
+                        <option value="">Select month</option>
+                        {% for m in months %}
+                            <option value="{{ m }}">{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                    <select id="session_year" class="form-select" required>
+                        <option value="">Select year</option>
+                        {% for y in years %}
+                            <option value="{{ y }}">{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {{ form.session }}
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold small text-dark mb-1">Status</label>
+                <div class="checkbox-group d-flex flex-wrap gap-3 p-2 border rounded">
+                    <div class="form-check">
+                        {{ form.trained }}
+                        <label class="form-check-label" for="{{ form.trained.id_for_label }}">{{ form.trained.label }}</label>
+                    </div>
+                    <div class="form-check">
+                        {{ form.certified }}
+                        <label class="form-check-label" for="{{ form.certified.id_for_label }}">{{ form.certified.label }}</label>
+                    </div>
+                    <div class="form-check">
+                        {{ form.placed }}
+                        <label class="form-check-label" for="{{ form.placed.id_for_label }}">{{ form.placed.label }}</label>
+                    </div>
+                    <div class="form-check">
+                        {{ form.claimed }}
+                        <label class="form-check-label" for="{{ form.claimed.id_for_label }}">{{ form.claimed.label }}</label>
+                    </div>
+                </div>
+
+                {% if form.trained.errors or form.certified.errors or form.placed.errors or form.claimed.errors %}
+                    <div class="text-danger small mt-1">
+                        {% if form.trained.errors %}{{ form.trained.errors|striptags }} {% endif %}
+                        {% if form.certified.errors %}{{ form.certified.errors|striptags }} {% endif %}
+                        {% if form.placed.errors %}{{ form.placed.errors|striptags }}{% endif %}
+                        {% if form.claimed.errors %}{{ form.claimed.errors|striptags }}{% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-6 mb-3" id="trained_date_container" style="display: none;">
+                <label for="{{ form.trained_date.id_for_label }}" class="form-label fw-bold small text-dark mb-1">
+                    Trained Date
+                </label>
+                {{ form.trained_date }}
+                {% if form.trained_date.errors %}
+                    <div class="text-danger small mt-1">
+                        {{ form.trained_date.errors|striptags }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-6 mb-3" id="certified_date_container" style="display: none;">
+                <label for="{{ form.certified_date.id_for_label }}" class="form-label fw-bold small text-dark mb-1">
+                    Certified Date
+                </label>
+                {{ form.certified_date }}
+                {% if form.certified_date.errors %}
+                    <div class="text-danger small mt-1">
+                        {{ form.certified_date.errors|striptags }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="mt-4 pt-4 border-top d-flex justify-content-between align-items-center">
+            <span class="text-muted small">* All fields are required unless marked otherwise</span>
+            <div class="d-flex gap-2">
+                <button type="reset" class="btn btn-outline-secondary px-4">Reset</button>
+                <button type="submit" class="btn btn-dark px-5 fw-bold">Add Student</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    function updateSessionInput() {
+        var month = document.getElementById('session_month').value;
+        var year = document.getElementById('session_year').value;
+        var sessionField = document.getElementById('id_session');
+        if (month && year) {
+            sessionField.value = month + '-' + year;
+        } else {
+            sessionField.value = '';
+        }
+    }
+
+    function toggleDateFields() {
+        var trainedCheckbox = document.getElementById('id_trained');
+        var certifiedCheckbox = document.getElementById('id_certified');
+        var trainedDateContainer = document.getElementById('trained_date_container');
+        var certifiedDateContainer = document.getElementById('certified_date_container');
+        var trainedDateInput = document.getElementById('id_trained_date');
+        var certifiedDateInput = document.getElementById('id_certified_date');
+
+        if (trainedCheckbox.checked) {
+            trainedDateContainer.style.display = 'block';
+        } else {
+            trainedDateContainer.style.display = 'none';
+            trainedDateInput.value = '';
+        }
+
+        if (certifiedCheckbox.checked) {
+            certifiedDateContainer.style.display = 'block';
+        } else {
+            certifiedDateContainer.style.display = 'none';
+            certifiedDateInput.value = '';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var month = document.getElementById('session_month');
+        var year = document.getElementById('session_year');
+        var form = document.getElementById('student_form');
+        if (month && year) {
+            month.addEventListener('change', updateSessionInput);
+            year.addEventListener('change', updateSessionInput);
+        }
+        if (form) {
+            form.addEventListener('submit', updateSessionInput);
+        }
+
+        // Add event listeners for status checkboxes
+        var trainedCheckbox = document.getElementById('id_trained');
+        var certifiedCheckbox = document.getElementById('id_certified');
+        if (trainedCheckbox && certifiedCheckbox) {
+            trainedCheckbox.addEventListener('change', toggleDateFields);
+            certifiedCheckbox.addEventListener('change', toggleDateFields);
+            // Initial check
+            toggleDateFields();
+        }
+    });
+</script>
+
+<style>
+    /* Clean, Flat Input Design */
+    input, select, textarea {
+        display: block;
+        width: 100%;
+        padding: 0.6rem 0.85rem;
+        font-size: 0.95rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px; /* Sharper corners for a more formal look */
+        background-color: #fff;
+        transition: border-color 0.2s;
+    }
+
+    /* Simple Focus - No Glow */
+    input:focus {
+        outline: none;
+        border-color: #000;
+        background-color: #f8f9fa;
+    }
+
+    /* Button Styling */
+    .btn-dark {
+        background-color: #000;
+        border: none;
+        border-radius: 4px;
+    }
+
+    .btn-dark:hover {
+        background-color: #333;
+    }
+
+    .btn-outline-secondary {
+        border-radius: 4px;
+    }
+
+    .checkbox-group {
+        background: #f8f9fa;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 15px;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+    }
+
+    .form-check-label {
+        margin-left: 0.5rem;
+        margin-bottom: 0;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    /* Toggle Switch Styling */
+    .form-check-input {
+        width: 3.5rem;
+        height: 1.5rem;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background: #ccc;
+        border: none;
+        border-radius: 1rem;
+        position: relative;
+        transition: background 0.3s ease;
+        padding: 0.2rem;
+    }
+
+    .form-check-input::before {
+        content: '';
+        position: absolute;
+        width: 1.1rem;
+        height: 1.1rem;
+        border-radius: 50%;
+        background: white;
+        top: 0.2rem;
+        left: 0.2rem;
+        transition: left 0.3s ease;
+    }
+
+    .form-check-input:checked {
+        background: #28a745;
+    }
+
+    .form-check-input:checked::before {
+        left: 2.1rem;
+    }
+
+    .form-check-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.25);
+    }
+</style>
+{% endblock content %}

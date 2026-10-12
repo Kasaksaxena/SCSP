@@ -1,0 +1,90 @@
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+
+
+    <link rel="stylesheet" href="{% static "index.css" %}">
+    <title>Portal</title>
+</head>
+<body>
+    <div class="main">
+        <div class="upper-nav">
+            <img src="{% static "logo.jpeg" %}" alt="">
+        </div>
+        <div class="hero">
+            <div class="left-nav">
+                <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
+                <div class="ul">
+                    <li class="libtn {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <a href="{% url 'dashboard' %}" class="at">Dashboard</a>
+                    </li>
+
+                    <li class="libtn {% if request.resolver_match.url_name == 'upload' %}active{% endif %}">
+                        <a href="{% url 'upload' %}" class="at">Upload</a>
+                    </li>
+
+                    <li class="libtn {% if request.resolver_match.url_name == 'download' %}active{% endif %}">
+                        <a href="{% url 'download' %}" class="at">Download</a>
+                    </li>
+                    <li class="libtn {% if request.resolver_match.url_name == 'add_student' %}active{% endif %}">
+                        <a href="{% url 'input' %}" class="at">Add Student</a>
+                    </li>
+                    <li class="libtn {% if request.resolver_match.url_name == 'overview' %}active{% endif %}">
+                        <a href="{% url 'overview' %}" class="at">Overview</a>
+                    </li>
+                    <li class="libtn {% if request.resolver_match.url_name == 'sample' %}active{% endif %}">
+                        <a href="{% url 'sample' %}" class="at">Sample Template</a>
+                    </li>
+                    <li class="libtn {% if request.resolver_match.url_name == 'download' %}active{% endif %}">
+                        <a href="{% url 'courses' %}" class="at">View courses</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                        <li><a href="{% url 'logout' %}" class="logout">Logout</a></li>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="right-div" style="overflow-y:scroll;">
+                {% block content %}
+                {% endblock content %}
+            </div>
+        </div>
+        </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+            crossorigin="anonymous"></script>
+
+    <script>
+        $(document).ready(function(){
+            $(".libtn").click(function(){
+                $(".libtn").removeClass("active")
+                $(this).addClass("active")
+            })
+
+            const body = document.body;
+            const toggle = document.getElementById('sidebarToggle');
+            const collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+
+            function setCollapsed(value) {
+                localStorage.setItem('sidebarCollapsed', value);
+                if (value) {
+                    body.classList.add('sidebar-collapsed');
+                } else {
+                    body.classList.remove('sidebar-collapsed');
+                }
+            }
+
+            setCollapsed(collapsed);
+
+            toggle.addEventListener('click', () => {
+                const isCollapsed = body.classList.toggle('sidebar-collapsed');
+                setCollapsed(isCollapsed);
+            });
+        })
+    </script>
+</body>
+</html>

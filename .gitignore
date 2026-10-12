@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+env/
+
+# Secrets / local config
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+id_rsa*
+secrets.json
+
+# Databases & local data (contains student PII e.g. Aadhaar)
+db.sqlite3
+*.sqlite3
+*.sqlite3-journal
+*.db
+
+# Django / build output
+staticfiles/
+staticfiles_build/
+media/
+*.log
+
+# Vercel
+.vercel/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

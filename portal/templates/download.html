@@ -1,0 +1,300 @@
+{% extends "base.html" %} {% block content %}
+<h2>Download Reports</h2>
+
+<div
+    style="
+        margin: 20px 0;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    "
+>
+    <select
+        id="year"
+        style="
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+        "
+    >
+        <option value="">All Years</option>
+        {% for y in years %}
+        <option value="{{ y }}">{{ y }}</option>
+        {% endfor %}
+    </select>
+
+    <select
+        id="session"
+        style="
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+        "
+    >
+        <option value="">All Sessions</option>
+        {% for s in months %}
+        <option value="{{ s }}">{{ s }}</option>
+        {% endfor %}
+    </select>
+
+    <select
+        id="center"
+        style="
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+        "
+    >
+        <option value="">All Centers</option>
+        <option value="inderlok">Inderlok</option>
+        <option value="janakpuri">Janakpuri</option>
+        <option value="karkardooma">Karkardooma</option>
+    </select>
+
+    <button
+        onclick="clearFilters()"
+        style="
+            padding: 8px 15px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        "
+    >
+        Clear
+    </button>
+
+    <div style="margin: 2px 0; display: flex; gap: 20px; align-items: center">
+        <button
+            onclick="exportExcel()"
+            style="
+                padding: 8px 20px;
+                background: green;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+            "
+        >
+            Export Excel
+        </button>
+        <span id="total" style="font-weight: bold">Total: 0</span>
+    </div>
+
+    <span id="loader" style="display: none; color: #1976d2">Loading...</span>
+</div>
+
+<div style="overflow-x: auto">
+    <table
+        border="1"
+        style="width: 100%; border-collapse: collapse; font-size: 13px"
+    >
+        <thead style="background: #1976d2; color: white">
+            <tr>
+                <th rowspan="2">Category</th>
+                <th rowspan="2">Course</th>
+                <th rowspan="2">Scheme</th>
+                <th rowspan="2">NSQF</th>
+                <th rowspan="2">Hours</th>
+                <th rowspan="2">Center</th>
+                <th rowspan="2">Session</th>
+                <th colspan="3">GENERAL</th>
+                <th colspan="3">OBC</th>
+                <th colspan="3">SC</th>
+                <th colspan="3">ST</th>
+                <th colspan="3">PWD</th>
+            </tr>
+            <tr>
+                <th>T</th>
+                <th>C</th>
+                <th>P</th>
+                <th>T</th>
+                <th>C</th>
+                <th>P</th>
+                <th>T</th>
+                <th>C</th>
+                <th>P</th>
+                <th>T</th>
+                <th>C</th>
+                <th>P</th>
+                <th>T</th>
+                <th>C</th>
+                <th>P</th>
+            </tr>
+        </thead>
+
+        <tbody id="tbody">
+            <tr>
+                <td colspan="22" style="text-align: center">Loading...</td>
+            </tr>
+        </tbody>
+
+        <tfoot id="tfoot"></tfoot>
+    </table>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        loadData();
+        ["year", "session", "center"].forEach((id) =>
+            document.getElementById(id).addEventListener("change", loadData),
+        );
+    });
+
+    function loadData() {
+        const year = document.getElementById("year").value;
+        const session = document.getElementById("session").value;
+        const center = document.getElementById("center").value;
+
+        document.getElementById("loader").style.display = "inline";
+        document.getElementById("tbody").innerHTML =
+            '<tr><td colspan="22" style="text-align:center;">Loading...</td></tr>';
+
+        const url = new URL("/api/download-data/", window.location.origin);
+
+        if (year) url.searchParams.append("year", year);
+        if (session) url.searchParams.append("session", session);
+        if (center) url.searchParams.append("center", center);
+
+        fetch(url)
+            .then((res) => {
+                if (!res.ok) throw new Error("Network error");
+                return res.json();
+            })
+            .then((data) => {
+                displayData(data.results);
+                document.getElementById("loader").style.display = "none";
+            })
+            .catch((err) => {
+                console.error(err);
+                document.getElementById("tbody").innerHTML =
+                    '<tr><td colspan="22" style="text-align:center; color:red;">Error loading data</td></tr>';
+                document.getElementById("tfoot").innerHTML = "";
+                document.getElementById("total").innerText = "Total: 0";
+                document.getElementById("loader").style.display = "none";
+            });
+    }
+
+    function displayData(results) {
+        const tbody = document.getElementById("tbody");
+        const tfoot = document.getElementById("tfoot");
+        const totalSpan = document.getElementById("total");
+
+        if (!results || results.length === 0) {
+            tbody.innerHTML =
+                '<tr><td colspan="22" style="text-align:center;">No data found</td></tr>';
+            tfoot.innerHTML = "";
+            totalSpan.innerText = "Total: 0";
+            return;
+        }
+
+        const groups = {};
+        const totals = {
+            GENERAL: { t: 0, c: 0, p: 0 },
+            OBC: { t: 0, c: 0, p: 0 },
+            SC: { t: 0, c: 0, p: 0 },
+            ST: { t: 0, c: 0, p: 0 },
+            PWD: { t: 0, c: 0, p: 0 },
+            all: 0,
+        };
+
+        results.forEach((row) => {
+            const key = `${row.course_category}|${row.course_name}|${row.center_name}|${row.session}`;
+
+            if (!groups[key]) {
+                groups[key] = {
+                    cat: row.course_category || "-",
+                    course: row.course_name || "-",
+                    scheme: row.scheme || "-", // ✅ FIXED
+                    nsqf: row.nsqf || "-", // ✅ FIXED
+                    hours: row.course_hour || "-",
+                    center: row.center_name || "-",
+                    session: row.session || "-",
+                    GENERAL: { t: 0, c: 0, p: 0 },
+                    OBC: { t: 0, c: 0, p: 0 },
+                    SC: { t: 0, c: 0, p: 0 },
+                    ST: { t: 0, c: 0, p: 0 },
+                    PWD: { t: 0, c: 0, p: 0 },
+                };
+            }
+
+            const caste = row.caste_category;
+            if (!groups[key][caste]) return;
+
+            if (row.trained_date) {
+                groups[key][caste].t++;
+                totals[caste].t++;
+            }
+            if (row.certified_date) {
+                groups[key][caste].c++;
+                totals[caste].c++;
+            }
+            if (row.placed) {
+                groups[key][caste].p++;
+                totals[caste].p++;
+            }
+
+            totals.all++;
+        });
+
+        tbody.innerHTML = Object.values(groups)
+            .map(
+                (g) => `
+        <tr>
+            <td>${g.cat}</td>
+            <td>${g.course}</td>
+            <td>${g.scheme}</td>
+            <td>${g.nsqf}</td>
+            <td>${g.hours}</td>
+            <td>${g.center}</td>
+            <td>${g.session}</td>
+
+            <td>${g.GENERAL.t}</td><td>${g.GENERAL.c}</td><td>${g.GENERAL.p}</td>
+            <td>${g.OBC.t}</td><td>${g.OBC.c}</td><td>${g.OBC.p}</td>
+            <td>${g.SC.t}</td><td>${g.SC.c}</td><td>${g.SC.p}</td>
+            <td>${g.ST.t}</td><td>${g.ST.c}</td><td>${g.ST.p}</td>
+            <td>${g.PWD.t}</td><td>${g.PWD.c}</td><td>${g.PWD.p}</td>
+        </tr>
+    `,
+            )
+            .join("");
+
+        tfoot.innerHTML = `
+        <tr style="background:#e3f2fd; font-weight:bold;">
+            <td colspan="7">TOTAL</td>
+            <td>${totals.GENERAL.t}</td><td>${totals.GENERAL.c}</td><td>${totals.GENERAL.p}</td>
+            <td>${totals.OBC.t}</td><td>${totals.OBC.c}</td><td>${totals.OBC.p}</td>
+            <td>${totals.SC.t}</td><td>${totals.SC.c}</td><td>${totals.SC.p}</td>
+            <td>${totals.ST.t}</td><td>${totals.ST.c}</td><td>${totals.ST.p}</td>
+            <td>${totals.PWD.t}</td><td>${totals.PWD.c}</td><td>${totals.PWD.p}</td>
+        </tr>`;
+
+        totalSpan.innerText = "Total: " + totals.all;
+    }
+
+    function clearFilters() {
+        ["year", "session", "center"].forEach(
+            (id) => (document.getElementById(id).value = ""),
+        );
+        loadData();
+    }
+
+    function exportExcel() {
+        const table = document.querySelector("table");
+        const blob = new Blob([table.outerHTML], {
+            type: "application/vnd.ms-excel",
+        });
+        const link = document.createElement("a");
+
+        link.href = URL.createObjectURL(blob);
+        link.download = "report.xls";
+        link.click();
+    }
+</script>
+
+{% endblock %}

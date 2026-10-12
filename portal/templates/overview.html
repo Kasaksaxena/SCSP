@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid px-3">
+    <!-- Header Section -->
+    <div class="mb-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold m-0" style="color: #1a1a1a; font-size: 1.8rem;">Student Overview</h2>
+                <p class="text-muted small mt-1 mb-0">Comprehensive statistics and enrollment data</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter and Total Section -->
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-4 col-lg-3">
+            <label for="sessionSelect" class="form-label fw-bold small text-dark mb-1">Filter by Session</label>
+            <select id="sessionSelect" class="form-select form-select-sm rounded-2 border-1" style="border-color: #dee2e6;">
+                <option value="">📅 All Sessions</option>
+                {% for session in sessions %}
+                    <option value="{{ session }}" {% if selected_session == session %}selected{% endif %}>{{ session }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-8 col-lg-9">
+            <div class="card border-0 shadow-sm rounded-2 overflow-hidden" style="background-color: #0e2238;">
+                <div class="p-2">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="mb-0 fw-semibold text-white small" style="opacity: 0.9;">Total Enrolled Students</p>
+                            <h3 class="fw-bold text-white mb-0">
+                                <span id="overviewTotal">{{ all_record }}</span>
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Center Cards Section -->
+    <div class="row g-3" id="overviewCards" style="max-height: 70vh; overflow-y: auto; justify-content: center;">
+        {% for center, stats in centers %}
+            <div class="col-md-6 col-lg-4 col-xl-3">
+                <div class="card border-0 shadow-sm rounded-2 overflow-hidden h-100" style="min-height: 350px;">
+                    <!-- Card Header -->
+                    <div style="background-color:#0e2238; padding: 1rem;">
+                        <h5 class="text-white fw-bold mb-2" style="font-size: 1.1rem;">{{ center }}</h5>
+                        <p class="text-white mb-0 small" style="opacity: 0.9; font-size: 0.9rem;">
+                            <strong>Total:</strong> <span style="font-size: 1.3rem;">{{ stats.Total }}</span>
+                        </p>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-2">
+                        <!-- Caste Stats -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-4">
+                                <div class="text-center p-2 bg-light rounded-1">
+                                    <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">GEN</p>
+                                    <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">{{ stats.GENERAL }}</h5>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center p-2 bg-light rounded-1">
+                                    <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">SC</p>
+                                    <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">{{ stats.SC }}</h5>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center p-2 bg-light rounded-1">
+                                    <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">ST</p>
+                                    <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">{{ stats.ST }}</h5>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-2 bg-light rounded-1">
+                                    <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">OBC</p>
+                                    <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">{{ stats.OBC }}</h5>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-2 bg-light rounded-1">
+                                    <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">PWD</p>
+                                    <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">{{ stats.PWD }}</h5>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Course Types -->
+                        <div class="row g-2">
+                            <div class="col-3">
+                                <div class="text-center p-2 bg-light rounded-1">
+                                    <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">B</p>
+                                    <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">{{ stats.B }}</h5>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="text-center p-2 bg-light rounded-1">
+                                    <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">C</p>
+                                    <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">{{ stats.C }}</h5>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="text-center p-2 bg-light rounded-1">
+                                    <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">D</p>
+                                    <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">{{ stats.D }}</h5>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="text-center p-2 bg-light rounded-1">
+                                    <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">E</p>
+                                    <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">{{ stats.E }}</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .card {
+        transition: box-shadow 0.2s ease;
+    }
+    .card:hover {
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1) !important;
+    }
+    .x-small {
+        font-size: 0.7rem;
+    }
+</style>
+    <script>
+        const sessionSelect = document.getElementById('sessionSelect');
+        const overviewTotal = document.getElementById('overviewTotal');
+        const overviewCards = document.getElementById('overviewCards');
+
+        function renderCenterCard(center) {
+            return `
+                <div class="col-md-6 col-lg-4 col-xl-3">
+                    <div class="card border-0 shadow-sm rounded-2 overflow-hidden h-100" style="min-height: 350px;">
+                        <div style="background-color: #0e2238; padding: 1rem;">
+                            <h5 class="text-white fw-bold mb-2" style="font-size: 1.1rem;">${center.name}</h5>
+                            <p class="text-white mb-0 small" style="opacity: 0.9; font-size: 0.9rem;">
+                                <strong>Total:</strong> <span style="font-size: 1.3rem;">${center.stats.Total}</span>
+                            </p>
+                        </div>
+                        <div class="p-2">
+                            <div class="row g-2 mb-3">
+                                <div class="col-4">
+                                    <div class="text-center p-2 bg-light rounded-1">
+                                        <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">GEN</p>
+                                        <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">${center.stats.GENERAL}</h5>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center p-2 bg-light rounded-1">
+                                        <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">SC</p>
+                                        <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">${center.stats.SC}</h5>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center p-2 bg-light rounded-1">
+                                        <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">ST</p>
+                                        <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">${center.stats.ST}</h5>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-light rounded-1">
+                                        <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">OBC</p>
+                                        <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">${center.stats.OBC}</h5>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-light rounded-1">
+                                        <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">PWD</p>
+                                        <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">${center.stats.PWD}</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-3">
+                                    <div class="text-center p-2 bg-light rounded-1">
+                                        <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">B</p>
+                                        <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">${center.stats.B}</h5>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="text-center p-2 bg-light rounded-1">
+                                        <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">C</p>
+                                        <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">${center.stats.C}</h5>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="text-center p-2 bg-light rounded-1">
+                                        <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">D</p>
+                                        <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">${center.stats.D}</h5>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="text-center p-2 bg-light rounded-1">
+                                        <p class="text-muted x-small mb-1" style="font-size: 0.8rem;">E</p>
+                                        <h5 class="fw-bold text-dark mb-0" style="font-size: 1.2rem;">${center.stats.E}</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadOverviewData(sessionValue) {
+            const url = new URL('{% url "overview_data" %}', window.location.origin);
+            if (sessionValue) {
+                url.searchParams.set('session', sessionValue);
+            }
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    overviewTotal.textContent = data.all_record;
+                    overviewCards.innerHTML = data.centers.map(renderCenterCard).join('');
+
+                    const currentOption = sessionSelect.querySelector(`option[value="${sessionValue}"]`);
+                    if (currentOption) {
+                        currentOption.selected = true;
+                    }
+                })
+                .catch(err => console.error('Overview AJAX error', err));
+        }
+
+        sessionSelect.addEventListener('change', () => {
+            loadOverviewData(sessionSelect.value);
+        });
+    </script>
+
+{% endblock content %}

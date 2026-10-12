@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="upload-container">
+    <h2 class="page-title">Upload Student Data</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="upload-card">
+        <form method="post" enctype="multipart/form-data" class="upload-form">
+            {% csrf_token %}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.year.id_for_label }}">Select Year:</label>
+                    {{ form.year }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.session.id_for_label }}">Select Session (Month):</label>
+                    {{ form.session }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.file.id_for_label }}">Upload Excel File:</label>
+                <div class="file-upload-wrapper">
+                    {{ form.file }}
+                    <div class="file-upload-instructions">
+                        Supported format: .xlsx, .xls (Max size: 10MB)
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Upload Data</button>
+                <button type="reset" class="btn btn-secondary">Clear</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="instructions-card">
+        <h3>Excel File Format</h3>
+        <p>First row must be headers. Required columns are marked Yes.</p>
+
+        <div class="table-responsive">
+            <table class="format-table">
+                <thead>
+                    <tr>
+                        <th>Column Name</th>
+                        <th>Description</th>
+                        <th>Required</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>roll_number</code></td><td>Student roll number</td><td>No</td><td>2024001</td></tr>
+                    <tr><td><code>name</code></td><td>Student full name</td><td>Yes</td><td>Rahul Sharma</td></tr>
+                    <tr><td><code>course_name</code></td><td>Name of the course</td><td>Yes</td><td>Python Programming</td></tr>
+                    <tr><td><code>scheme</code></td><td>Scheme name or code</td><td>No</td><td>PMKVY 4.0</td></tr>
+                    <tr><td><code>nsqf</code></td><td>NSQF level</td><td>No</td><td>Level 4</td></tr>
+                    <tr><td><code>course_hour</code></td><td>Total course hours (determines category)</td><td>Yes</td><td>120</td></tr>
+                    <tr><td><code>mode</code></td><td>offline / online</td><td>Yes</td><td>offline</td></tr>
+                    <tr><td><code>caste_category</code></td><td>OBC / SC / ST / PWD / GENERAL</td><td>Yes</td><td>OBC</td></tr>
+                    <tr><td><code>center_name</code></td><td>inderlok / janakpuri / karkardooma</td><td>Yes</td><td>inderlok</td></tr>
+                    <tr><td><code>fee</code></td><td>Course fee in rupees</td><td>No</td><td>5000</td></tr>
+                    <tr><td><code>trained_date</code></td><td>Month trained, e.g. JAN-2024</td><td>No</td><td>JAN-2024</td></tr>
+                    <tr><td><code>certified_date</code></td><td>Month certified, e.g. MAR-2024</td><td>No</td><td>MAR-2024</td></tr>
+                    <tr><td><code>placed</code></td><td>TRUE / FALSE</td><td>No</td><td>FALSE</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="note">
+            <strong>Note:</strong> Session (e.g. JAN-2024) is picked from the form above — no need for it in the Excel file.
+            Course category (B/C/D/E) is auto-calculated from course hours and course name.
+            Claimable amount is auto-calculated from fee and trained/certified status.
+        </div>
+    </div>
+</div>
+{% endblock %}
