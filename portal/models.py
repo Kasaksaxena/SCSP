@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+from django.core.validators import RegexValidator
 from django.db import models
 
 DLC_KEYWORDS = ["ccc", "bcc", "ccc+"]
@@ -81,7 +84,12 @@ class studentdata(models.Model):
         max_length=50, null=True, blank=True, choices=HIGHEST_QUALIFICATION
     )
     address = models.CharField(max_length=100, null=True, blank=True)
-    aadhaar = models.CharField(max_length=12, null=True, blank=True)
+    aadhaar = models.CharField(
+        max_length=12,
+        null=True,
+        blank=True,
+        validators=[RegexValidator(r"^\d{12}$", "Aadhaar must be exactly 12 digits.")],
+    )
     course_name = models.CharField(
         max_length=100, choices=COURSE_CHOICES, null=True, blank=True
     )
@@ -106,8 +114,18 @@ class studentdata(models.Model):
     placed = models.BooleanField(default=False)
     claimed = models.BooleanField(default=False)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["center_name", "trained", "certified"]),
+            models.Index(fields=["trained_date"]),
+            models.Index(fields=["certified_date"]),
+            models.Index(fields=["session"]),
+            models.Index(fields=["aadhaar"]),
+        ]
+
     def save(self, *args, **kwargs):
         self.course_category = get_course_category(self.course_name, self.course_hour)
+        self.claimable_amount = self.calculate_claimable_amount()
         super().save(*args, **kwargs)
 
     def is_ao_level(self):
@@ -120,54 +138,58 @@ class studentdata(models.Model):
             for keyword in ["a level", "o level", "a-level", "o-level"]
         )
 
-    def get_quarter_from_date(self, date_val):
-        """Extract quarter (Q1-Q4) from a date object
-        Q1: APR-JUN, Q2: JUL-SEP, Q3: OCT-DEC, Q4: JAN-MAR
-        """
-        if not date_val:
-            return None
-
-        if not hasattr(date_val, 'month'):
-            return None
-
-        month = date_val.month
-        if month in [4, 5, 6]:
-            return "Q1"
-        elif month in [7, 8, 9]:
-            return "Q2"
-        elif month in [10, 11, 12]:
-            return "Q3"
-        elif month in [1, 2, 3]:
-            return "Q4"
-        return None
-
-    def get_claimable_amount_for_quarter(self, selected_quarter):
-        """Calculate claimable amount based on selected quarter filter
-        
-        Returns the claimable amount as percentage of fee for the given quarter:
-        - For A/O-level: 100% if certified in that quarter, 0% if only trained
-        - For others: 70% if trained in that quarter, 30% if certified in that quarter
-        """
-        if not self.fee:
-            return 0
-
-        trained_quarter = self.get_quarter_from_date(self.trained_date)
-        certified_quarter = self.get_quarter_from_date(self.certified_date)
-
+    def calculate_claimable_amount(self):
+        """Total claimable so far.
+        A/O level: 100% of fee once certified.
+        Others: 70% once trained + 30% once certified."""
+        fee = Decimal(str(self.fee or 0))
         if self.is_ao_level():
-            # A/O level: 100% if certified, 0% if trained
-            if self.certified and certified_quarter == selected_quarter:
-                return self.fee
-            else:
-                return 0
-        else:
-            # Non-A/O level: 70% if trained, 30% if certified
-            if self.certified and certified_quarter == selected_quarter:
-                return self.fee * 30 / 100
-            elif self.trained and trained_quarter == selected_quarter:
-                return self.fee * 70 / 100
-            else:
-                return 0
+            return fee if self.certified else Decimal(0)
+        amount = Decimal(0)
+        if self.trained:
+            amount += fee * 70 / 100
+        if self.certified:
+            amount += fee * 30 / 100
+        return amount
+
+    def get_quarter_from_date(self, date_val):
+        """Financial-year quarter of a date: Q1 APR-JUN, Q2 JUL-SEP, Q3 OCT-DEC, Q4 JAN-MAR"""
+        if not date_val or not hasattr(date_val, "month"):
+            return None
+        month = date_val.month
+        if month in (4, 5, 6):
+            return "Q1"
+        if month in (7, 8, 9):
+            return "Q2"
+        if month in (10, 11, 12):
+            return "Q3"
+        return "Q4"
+
+    def _event_in_quarter(self, flag, date_val, quarter, year=None):
+        if not flag or not date_val:
+            return False
+        if self.get_quarter_from_date(date_val) != quarter:
+            return False
+        return year is None or date_val.year == int(year)
+
+    def get_claimable_amount_for_quarter(self, selected_quarter, year=None):
+        """Amount claimable in the selected quarter (and calendar year, if given).
+        A/O level: 100% if certified in that quarter.
+        Others: 70% if trained in that quarter + 30% if certified in that quarter
+        (both in the same quarter = 100%)."""
+        fee = Decimal(str(self.fee or 0))
+        if not fee:
+            return Decimal(0)
+        trained_here = self._event_in_quarter(self.trained, self.trained_date, selected_quarter, year)
+        certified_here = self._event_in_quarter(self.certified, self.certified_date, selected_quarter, year)
+        if self.is_ao_level():
+            return fee if certified_here else Decimal(0)
+        amount = Decimal(0)
+        if trained_here:
+            amount += fee * 70 / 100
+        if certified_here:
+            amount += fee * 30 / 100
+        return amount
 
     def __str__(self):
         return f"{self.name} - {self.course_name} ({self.caste_category})"

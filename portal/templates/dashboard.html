@@ -537,7 +537,7 @@
         const year = document.getElementById("yearFilter").value;
         const sortOrder = sortAsc ? "asc" : "desc";
 
-        const url = `/filter-students/?center=${center}&mode=${mode}&caste=${caste}&trained=${trained}&certified=${certified}&placed=${placed}&claimed=${claimed}&scheme=${scheme}&nsqf=${nsqf}&quarterly=${quarterly}&year=${year}&page=${currentPage}&limit=${currentLimit}&sort_field=${sortField || ""}&sort_order=${sortOrder}`;
+        const url = `/filter-students/?center=${center}&mode=${mode}&caste=${caste}&trained=${trained}&certified=${certified}&placed=${placed}&claimed=${claimed}&scheme=${scheme}&nsqf=${nsqf}&quarterly=${quarterly}&year=${year}&page=${currentPage}&limit=${currentLimit}&sort_field=${sortField || ""}&sort_order=${sortOrder}&q=${encodeURIComponent(document.getElementById("searchInput").value.trim())}`;
 
         fetch(url)
             .then((res) => res.json())
@@ -593,7 +593,7 @@
         const year = document.getElementById("yearFilter").value;
         const sortOrder = sortAsc ? "asc" : "desc";
 
-        const url = `/download-filtered-data/?center=${center}&mode=${mode}&caste=${caste}&trained=${trained}&certified=${certified}&placed=${placed}&claimed=${claimed}&scheme=${scheme}&nsqf=${nsqf}&quarterly=${quarterly}&year=${year}&sort_field=${sortField || ""}&sort_order=${sortOrder}`;
+        const url = `/download-filtered-data/?center=${center}&mode=${mode}&caste=${caste}&trained=${trained}&certified=${certified}&placed=${placed}&claimed=${claimed}&scheme=${scheme}&nsqf=${nsqf}&quarterly=${quarterly}&year=${year}&sort_field=${sortField || ""}&sort_order=${sortOrder}&q=${encodeURIComponent(document.getElementById("searchInput").value.trim())}`;
 
         window.open(url, "_blank");
     }
@@ -875,19 +875,15 @@
         }),
     );
 
-    document
-        .getElementById("searchInput")
-        .addEventListener("input", function () {
-            const searchTerm = this.value.toLowerCase();
-            const filteredData = currentData.filter((student) => {
-                const name = (student.name || "").toLowerCase();
-                const roll = (student.roll_number || "")
-                    .toString()
-                    .toLowerCase();
-                return name.includes(searchTerm) || roll.includes(searchTerm);
-            });
-            renderTable(filteredData);
-        });
+    // Search runs on the server (all pages), not only the 10 rows on screen
+    let searchTimer = null;
+    document.getElementById("searchInput").addEventListener("input", () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            currentPage = 1;
+            filterStudents();
+        }, 350);
+    });
 
     window.onload = () => {
         currentPage = 1;

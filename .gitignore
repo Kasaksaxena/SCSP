@@ -36,3 +36,9 @@ media/
 .idea/
 .DS_Store
 Thumbs.db
+data/
+*.xlsx
+*.xls
+*.csv
+data.json
+*.sql
