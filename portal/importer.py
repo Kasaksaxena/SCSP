@@ -16,6 +16,13 @@ GENDERS = {"m": "Male", "male": "Male", "f": "Female", "female": "Female"}
 CENTERS = {"inderlok": "inderlok", "janakpuri": "janakpuri", "karkardooma": "karkardooma"}
 
 
+# Column names used by the dashboard "Download Excel" file -> names the importer expects
+HEADER_ALIASES = {
+    "center": "center_name",
+    "course_hours": "course_hour",
+}
+
+
 def clean(v):
     if v is None:
         return None
@@ -58,6 +65,7 @@ class ImportResult:
 def import_workbook(ws, session="", dry_run=False):
     result = ImportResult(dry_run=dry_run)
     headers = [re.sub(r"\s+", "_", str(c.value).strip().lower()) if c.value else "" for c in ws[1]]
+    headers = [HEADER_ALIASES.get(h, h) for h in headers]  # also accepts the dashboard's own Excel export
 
     existing = set()
     for a, c, b, n, d in studentdata.objects.values_list("aadhaar", "course_name", "batch_code", "name", "dob"):
