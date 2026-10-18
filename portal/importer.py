@@ -15,6 +15,8 @@ CASTES = {"general": "GENERAL", "gen": "GENERAL", "obc": "OBC", "sc": "SC", "st"
 GENDERS = {"m": "Male", "male": "Male", "f": "Female", "female": "Female"}
 CENTERS = {"inderlok": "inderlok", "janakpuri": "janakpuri", "karkardooma": "karkardooma"}
 
+MONTHS = {m: i for i, m in enumerate(
+    ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"], 1)}
 
 # Column names used by the dashboard "Download Excel" file -> names the importer expects
 HEADER_ALIASES = {
@@ -22,28 +24,39 @@ HEADER_ALIASES = {
     "course_hours": "course_hour",
 }
 
+EXCEL_ERRORS = re.compile(r"#(VALUE|N/A|REF|DIV/0|NAME|NULL|NUM)[!?]?", re.I)
+
 
 def clean(v):
     if v is None:
         return None
     s = str(v).strip()
-    if s == "" or s.lower() in ("nan", "none", "null"):
+    if s == "" or s.lower() in ("nan", "none", "null") or EXCEL_ERRORS.fullmatch(s):
         return None
     return s[:-2] if re.fullmatch(r"\d+\.0", s) else s
 
 
 def to_date(v):
+    """Accepts real dates, 2026-06-01 style dates, and month-only values like JUN-2026
+    (month-only values become the 1st of that month)."""
     if not v:
         return None
     if isinstance(v, datetime):
         return v.date()
     if isinstance(v, date):
         return v
+    s = str(v).strip()
     for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%Y/%m/%d", "%d/%m/%Y", "%d.%m.%Y"):
         try:
-            return datetime.strptime(str(v).strip(), fmt).date()
+            return datetime.strptime(s, fmt).date()
         except ValueError:
             pass
+    m = re.fullmatch(r"([A-Za-z]{3,9})[-\s/.,]+(\d{4})", s)      # JUN-2026, June 2026
+    if m and m.group(1)[:3].upper() in MONTHS:
+        return date(int(m.group(2)), MONTHS[m.group(1)[:3].upper()], 1)
+    m = re.fullmatch(r"(\d{4})-(\d{1,2})", s)                    # 2026-06
+    if m and 1 <= int(m.group(2)) <= 12:
+        return date(int(m.group(1)), int(m.group(2)), 1)
     return None
 
 
@@ -87,7 +100,12 @@ def import_workbook(ws, session="", dry_run=False):
             result.warnings["aadhaar not 12 digits -> saved empty"] += 1
             aadhaar = ""
         aadhaar = aadhaar or None
+
         batch, dob = clean(r.get("batch_code")), to_date(r.get("dob"))
+        if dob and dob > date.today():
+            result.warnings["dob is in the future -> saved empty"] += 1
+            dob = None
+
         key = (aadhaar, course, batch) if aadhaar else (name.lower(), dob, course, batch)
         if key in existing:
             result.duplicates += 1
